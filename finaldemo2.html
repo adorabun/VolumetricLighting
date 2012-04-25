@@ -80,11 +80,11 @@
     uniform sampler2D uSampler;
 	
 	//for post process shader
-	const int NUM_SAMPLES = 250 ;
- 	const float EXPOSURE = 0.3;
-	const float DECAY = 0.9;
-	const float DENSITY = 5.3;
-	const float WEIGHT = 0.7;
+	const int NUM_SAMPLES = 250;
+ 	uniform float EXPOSURE;
+	uniform float DECAY;
+	uniform float DENSITY;
+	uniform float WEIGHT;
 	const vec2 lightPositionOnScreen = vec2(0.5,0.4);//	uniform vec2 lightPositionOnScreen;
 //0.5, 0.4;0.72,0.29;0.59,0.27
     void main(void) {
@@ -188,7 +188,9 @@
         return program;
     }
 
-
+	
+	
+	
     var currentProgram;
     var regProgram;
     var postProgram;
@@ -201,7 +203,11 @@
 		regProgram.drawblackUniform = gl.getUniformLocation(regProgram, "drawblack");
 
         postProgram = createProgram("post-process-fs", "vs");
-
+	//	postProgram.samplesUniform = gl.getUniformLocation(postProgram, "NUM_SAMPLES");
+		postProgram.exposureUniform = gl.getUniformLocation(postProgram, "EXPOSURE");
+		postProgram.decayUniform = gl.getUniformLocation(postProgram, "DECAY");
+		postProgram.densityUniform = gl.getUniformLocation(postProgram, "DENSITY");
+		postProgram.weightUniform = gl.getUniformLocation(postProgram, "WEIGHT");
 		
 		occProgram = createProgram("occlusion-fs", "vs");
 		occProgram.maskUniform = gl.getUniformLocation(occProgram, "mask");
@@ -224,24 +230,8 @@
 
     var gearTexture;
 	var lightSourceTexture;
-	var t1;
-	var t2
     
 	function initTexture() {
-		t1 = gl.createTexture();
-        t1.image = new Image();
-        t1.image.onload = function () {
-            handleLoadedTexture(t1)
-        }
-        t1.image.src = "c1.png";
-		
-		t2 = gl.createTexture();
-        t2.image = new Image();
-        t2.image.onload = function () {
-            handleLoadedTexture(t2)
-        }
-        t2.image.src = "c4.png";
-		
         gearTexture = gl.createTexture();
         gearTexture.image = new Image();
         gearTexture.image.onload = function () {
@@ -593,8 +583,8 @@
 		
 		gl.uniform1i(currentProgram.drawblackUniform, useTexture);
 	    mat4.identity(mvMatrix);
-      	mat4.translate(mvMatrix, [-12, 0, -92]);
-		mat4.rotate(mvMatrix, 80, [1, 0, 0]);
+      	mat4.translate(mvMatrix, [-6, 8, -92]);
+		mat4.rotate(mvMatrix, 105, [1, 0, 0]);
 		mat4.rotate(mvMatrix, degToRad(xRot), [0, 1, 0]);
 		mvPushMatrix();
 		gl.bindBuffer(gl.ARRAY_BUFFER, modelVertexPositionBuffer);
@@ -638,11 +628,19 @@
         gl.generateMipmap(gl.TEXTURE_2D);
         gl.bindTexture(gl.TEXTURE_2D, null);
 	}
+
+		
 	
 	function drawVolumetricLighting(tex, targetTexture){
 		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+		
+	//	gl.uniform1i(currentProgram.samplesUniform, document.getElementById("sample").value);
+		gl.uniform1f(currentProgram.exposureUniform,parseFloat(document.getElementById("exposure").value));
+		gl.uniform1f(currentProgram.decayUniform, parseFloat(document.getElementById("decay").value));
+		gl.uniform1f(currentProgram.densityUniform, parseFloat(document.getElementById("density").value));
+		gl.uniform1f(currentProgram.weightUniform, parseFloat(document.getElementById("weight").value));
 		
         mat4.identity(mvMatrix);
 		mat4.translate(mvMatrix, [0, 0, -2.4]);	 
@@ -778,13 +776,19 @@
 
 </head>
 
-
 <body onLoad="webGLStart();">
     <h1>Volumetric Lighting</h1>
 
     <canvas id="vl-demo" style="border: none;" width="512" height="512"></canvas>
 
     <br/>
+    <br/>
+  <!--  NUM_SAMPLES <input id="sample" type="range"  min="100" max="400" value="250"/><br/>-->
+ 	EXPOSURE <input id="exposure" type="range"  min="0" max="10"value="0.3" /><br/>
+	DECAY  <input id="decay" type="range"  min="0" max="10" value="0.9" /><br/>
+	DENSITY  <input id="density" type="range"  min="0" max="10" value="5.3"/><br/>
+	WEIGHT  <input id="weight" type="range"  min="0" max="1" value="0.7"/><br/>
+    
     <a href="http://adairliu.blogspot.com">Back to Blog</a><br />
 </body>
 
