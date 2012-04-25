@@ -541,65 +541,97 @@
 	}
 
 
-    var xRot = 0;
-    var yRot = 0;
-    var zRot = 0;
+    var modelVertexPositionBuffer;
+    var modelVertexNormalBuffer;
+    var modelVertexTextureCoordBuffer;
+    var modelVertexIndexBuffer;
 
+    function handleLoadedModel(modelData) {
+        modelVertexNormalBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, modelVertexNormalBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(modelData.vertexNormals), gl.STATIC_DRAW);
+        modelVertexNormalBuffer.itemSize = 3;
+        modelVertexNormalBuffer.numItems = modelData.vertexNormals.length / 3;
+
+        modelVertexTextureCoordBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, modelVertexTextureCoordBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(modelData.vertexTextureCoords), gl.STATIC_DRAW);
+        modelVertexTextureCoordBuffer.itemSize = 2;
+        modelVertexTextureCoordBuffer.numItems = modelData.vertexTextureCoords.length / 2;
+
+        modelVertexPositionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, modelVertexPositionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(modelData.vertexPositions), gl.STATIC_DRAW);
+        modelVertexPositionBuffer.itemSize = 3;
+        modelVertexPositionBuffer.numItems = modelData.vertexPositions.length / 3;
+
+        modelVertexIndexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, modelVertexIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(modelData.indices), gl.STREAM_DRAW);
+        modelVertexIndexBuffer.itemSize = 1;
+        modelVertexIndexBuffer.numItems = modelData.indices.length;
+    }
+
+
+    function loadModel() {
+        var request = new XMLHttpRequest();
+        request.open("GET", "gear.json");
+        request.onreadystatechange = function () {
+            if (request.readyState == 4) {
+                handleLoadedModel(JSON.parse(request.responseText));
+            }
+        }
+        request.send();
+    }
+	
+    var xRot = 0;
+	
 	function drawGearMask(useTexture, targetTexture){
 		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);	
 		
-		
 		gl.uniform1i(currentProgram.drawblackUniform, useTexture);
+	    mat4.identity(mvMatrix);
+      	mat4.translate(mvMatrix, [-12, 0, -92]);
+		mat4.rotate(mvMatrix, 80, [1, 0, 0]);
+		mat4.rotate(mvMatrix, degToRad(xRot), [0, 1, 0]);
+		mvPushMatrix();
+		gl.bindBuffer(gl.ARRAY_BUFFER, modelVertexPositionBuffer);
+        gl.vertexAttribPointer(currentProgram.vertexPositionAttribute, modelVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, modelVertexTextureCoordBuffer);
+        gl.vertexAttribPointer(currentProgram.textureCoordAttribute, modelVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+
+		gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, gearTexture);
+        gl.uniform1i(currentProgram.samplerUniform, 0);
 		
-        mat4.identity(mvMatrix);
-//right
-		 mat4.translate(mvMatrix, [0.5, 0.0, -8.0]);
-		 
-		mvPushMatrix();
-		mat4.rotate(mvMatrix, 130, [1, 0, 0]);
-        mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
-        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
-        mat4.rotate(mvMatrix, degToRad(zRot), [0, 0, 1]);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
-        gl.vertexAttribPointer(currentProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
-        gl.vertexAttribPointer(currentProgram.textureCoordAttribute, cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
-
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, gearTexture);
-        gl.uniform1i(currentProgram.samplerUniform, 0);
-
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, modelVertexIndexBuffer);
         setMatrixUniforms();
-        gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, modelVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 		mvPopMatrix();
-
-//left
-		mat4.translate(mvMatrix, [-1.5, 0.0, 0.0]);
-	
+		
+		mat4.identity(mvMatrix);
+      	mat4.translate(mvMatrix, [4, -10, -80]);
+		mat4.rotate(mvMatrix, 80, [1, 0, 0]);
+		mat4.rotate(mvMatrix, degToRad(xRot), [0, -1, 0]);
 		mvPushMatrix();
-		mat4.rotate(mvMatrix, 10, [1, 0, 0]);
-        mat4.rotate(mvMatrix, degToRad(xRot), [1, 0, 0]);
-        mat4.rotate(mvMatrix, degToRad(yRot), [0, 1, 0]);
-        mat4.rotate(mvMatrix, degToRad(zRot), [0, 0, 1]);
+		gl.bindBuffer(gl.ARRAY_BUFFER, modelVertexPositionBuffer);
+        gl.vertexAttribPointer(currentProgram.vertexPositionAttribute, modelVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
-        gl.vertexAttribPointer(currentProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, modelVertexTextureCoordBuffer);
+        gl.vertexAttribPointer(currentProgram.textureCoordAttribute, modelVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexTextureCoordBuffer);
-        gl.vertexAttribPointer(currentProgram.textureCoordAttribute, cubeVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-        gl.activeTexture(gl.TEXTURE0);
+		gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, gearTexture);
         gl.uniform1i(currentProgram.samplerUniform, 0);
-
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
+		
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, modelVertexIndexBuffer);
         setMatrixUniforms();
-        gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLES, modelVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 		mvPopMatrix();
 		
 		gl.bindTexture(gl.TEXTURE_2D, targetTexture);
@@ -712,10 +744,7 @@
         var timeNow = new Date().getTime();
         if (lastTime != 0) {
             var elapsed = timeNow - lastTime;
-
             xRot += (90 * elapsed) / 1000.0;
-            yRot += (90 * elapsed) / 1000.0;
-            zRot += (90 * elapsed) / 1000.0;
         }
         lastTime = timeNow;
     }
@@ -735,7 +764,8 @@
         initShaders();
         initBuffers();
         initTexture();
-
+		loadModel();
+		
         gl.clearColor(0.0, 0.0, 0.0, 0.0);
         gl.enable(gl.DEPTH_TEST);
 
